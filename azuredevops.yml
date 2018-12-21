@@ -1,0 +1,41 @@
+resources:
+- repo: self
+queue:
+  name: Hosted VS2017
+  demands: 
+  - msbuild
+  - visualstudio
+  - vstest
+
+#Your build pipeline references an undefined variable named ‘$(EmailClientId’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+steps:
+- task: AzureKeyVault@1
+  displayName: 'Azure Key Vault: zxkv'
+  inputs:
+    azureSubscription: 'APEX China Demo (3d965f36-85ba-4509-889a-48a30b540782)'
+
+    KeyVaultName: zxkv
+
+
+- powershell: 'Write-Host $($($env:EmailClientId).ToCharArray() -join ", ")'
+  displayName: 'PowerShell Script'
+  env:
+    EMAILCLIENTID: $(EmailClientId)
+
+- task: NuGetCommand@2
+  displayName: 'NuGet restore'
+  inputs:
+    restoreSolution: Test/Test.sln
+
+
+- task: VSBuild@1
+  displayName: 'Build solution Test/Test.sln'
+  inputs:
+    solution: Test/Test.sln
+
+
+- task: VSTest@2
+  displayName: 'Test Assemblies'
+  env:
+    EMAILCLIENTID: $(EmailClientId)
+
